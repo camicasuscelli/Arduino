@@ -169,13 +169,13 @@ void modoManual() {
         }
       }
     }
-    moverServoTrasero(flagMoverServoTrasero);
-    moverServoDelantero(flagMoverServoDelantero);
-    UltimoSegundo = tiempoEnSegundos; // Se guarda los segundos que lleva ejecutando, para compararlo con el siguiente
-    if(flagSensar == 1) {
-      sensar();
-      Serial.println("Sensando..."); 
-    }
+  }
+  moverServoTrasero(flagMoverServoTrasero);
+  moverServoDelantero(flagMoverServoDelantero);
+  UltimoSegundo = tiempoEnSegundos; // Se guarda los segundos que lleva ejecutando, para compararlo con el siguiente
+  if(flagSensar == 1) {
+    sensar();
+    Serial.println("Sensando..."); 
   } 
 }
 
