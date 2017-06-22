@@ -17,7 +17,7 @@ const int sensorLuz = 8;
 const int actuadorServoDelantero = 9;
 const int actuadorServoTrasero = 10;
 const int actuadorBoton = 11;
-int estado=0;   
+int estadoBoton=0;   
 int distanciaCM = 0;
 int valueLluvia = 0;
 long tiempoEnSegundos = 0;
@@ -25,7 +25,6 @@ long UltimoSegundo = 0;
 int flagManual = 0; //se inicializa en 0, así está en automatico al iniciar el sistema.
 int flagMoverServoTrasero = 1000;
 int flagMoverServoDelantero = 1000;
-boolean flagSensar = 0;
 int estadoSensar = 0;
 int delaySensor = 0;
 String cadena = ""; 
@@ -52,14 +51,14 @@ void loop(){
   //si está disponible el bluetooth y además el flag manual está en cero (sino no tiene sentido activar el modo manual)
   valueLluvia = analogRead(sensorLluvia);  //lectura analogica de pin
   boton();
-  if(estado == 1){
-    lcd.backlight(); //Enciendo el LCD 
+  if(estadoBoton == 1){
+    //lcd.backlight(); //Enciendo el LCD 
     sensar(); //comienza a sensar la distancia al objeto mas cercano
     moverServoTrasero(valueLluvia); //Este servo se mueve si llueve y ademas se puso march atras
   }
   else {
     lcd.clear(); //Limpio la pantalla del LCD
-    lcd.noBacklight(); //Apago el LCD
+    //lcd.noBacklight(); //Apago el LCD
     distanceForShow = -1; 
   }
   if(flagManual == 0 and BT1.available()){
@@ -82,10 +81,13 @@ void loop(){
     cadena = "";          
     estadoSensar = 0;
     if(valueLluvia < 700 )
-    isRain = true;
+      isRain = true;
     else
-    isRain = false;
+      isRain = false;
     cadena = (String) "$" + isRain + "|" + digitalRead(sensorLuz) + "|" + distanceForShow + "#";
+    //Protocolo de envido de mensajes hacia android
+    //El caracter $ representa el inicio de la cadena, luego los datos se mandan en un orden determinado
+    //el caracter # representa el fin de la cadena
     Serial.println(cadena);
     BT1.print(cadena);
   }
@@ -94,14 +96,16 @@ void loop(){
 
 void boton() {
   if(digitalRead(actuadorBoton) == HIGH) { // Si se presion el boton
-    estado=1-estado; // Se cambia de estado    
+    estadoBoton=1-estadoBoton; // Se cambia de estadoBoton    
     delay(100); //Esperamos 100 ms por el tiempo que permanece el dedo sobre el boton
+    //No es correcto utilizar un delay ya que se bloquean las demas actividades
+    //Sin embargo en esta caso no es tan grave porque es un periodo muy corto y el boton se lo presiona esporadicamente
     Serial.println("Boton Precionado");
   }
 }
 
 void modoManual() {
-  tiempoEnSegundos=millis()/1000;
+  tiempoEnSegundos=millis()/1000; //La funcion millis() devuelve el tiempo en milisegundos desde que el arduino comenzo a ejecutar el sketch
   if(BT1.available()){
     String BTString = BT1.readString();
     Serial.println("String Envidado desde BT");
@@ -129,9 +133,9 @@ void modoManual() {
           else{
             if(BTString.indexOf("sensarOff") != -1){
               Serial.println("sensarOff"); 
-              flagSensar = 0;
+              estadoBoton = 1 - estadoBoton;
               lcd.clear(); //Limpio la pantalla del LCD
-              lcd.noBacklight(); //Apago el LCD
+              //lcd.noBacklight(); //Apago el LCD
 
             }
             else {
@@ -147,8 +151,8 @@ void modoManual() {
                 else{
                   if(BTString.indexOf("sensarOn") != -1){
                     Serial.println("sensarOn");
-                    lcd.backlight(); //Enciendo el LCD 
-                    flagSensar = 1;
+                    //lcd.backlight(); //Enciendo el LCD 
+                    estadoBoton = 1 - estadoBoton;
                   }
                   else{
                     if(BTString.indexOf("automatico") != -1){
@@ -173,10 +177,6 @@ void modoManual() {
   moverServoTrasero(flagMoverServoTrasero);
   moverServoDelantero(flagMoverServoDelantero);
   UltimoSegundo = tiempoEnSegundos; // Se guarda los segundos que lleva ejecutando, para compararlo con el siguiente
-  if(flagSensar == 1) {
-    sensar();
-    Serial.println("Sensando..."); 
-  } 
 }
 
 void modoAutomatico() {
